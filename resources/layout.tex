@@ -1,0 +1,81 @@
+% Pandoc передаёт выбранный язык через параметры класса документа.
+\usepackage[provide=*,shorthands=off]{babel}
+% Шрифты выбираются по именам семейств, независимо от расположения проекта.
+\IfFontExistsTF{Segoe UI Emoji}{%
+  \directlua{
+    local extra = {"Segoe UI Symbol:mode=harf;", "Segoe UI Emoji:mode=harf;"}
+    local windows = os.getenv("WINDIR")
+    if windows then
+      table.insert(extra, "[" .. windows:gsub(string.char(92), "/") .. "/Fonts/tahoma.ttf]:mode=harf;")
+    end
+    luaotfload.add_fallback("bookglyphs", extra)
+  }%
+  \defaultfontfeatures+[\rmfamily,\sffamily,\ttfamily]{RawFeature={fallback=bookglyphs}}%
+}{}
+\IfFontExistsTF{DejaVu Serif}
+  {\setmainfont{DejaVu Serif}}
+  {\setmainfont{Times New Roman}}
+\IfFontExistsTF{DejaVu Sans}
+  {\setsansfont{DejaVu Sans}}
+  {\setsansfont{Arial}}
+\IfFontExistsTF{DejaVu Sans Mono}
+  {\setmonofont[Ligatures=NoCommon]{DejaVu Sans Mono}}
+  {\setmonofont[Ligatures=NoCommon]{Consolas}}
+
+\usepackage{fvextra}
+\usepackage{needspace}
+\usepackage{bookmark}
+\hypersetup{pdflang={\BCPdata{main.tag}}}
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true,breakanywhere=true}
+\ifcsname Highlighting\endcsname
+  \RecustomVerbatimEnvironment{Highlighting}{Verbatim}
+    {commandchars=\\\{\},breaklines=true,breakanywhere=true}
+  % Учитываем возможный перенос и внутри длинной строки одного цвета.
+  \newcommand{\BookWrapToken}[1]{%
+    \ifcsdef{#1Tok}{%
+      \csletcs{BookOriginal#1Tok}{#1Tok}%
+      \csdef{#1Tok}##1{\csuse{BookOriginal#1Tok}{\FancyVerbBreakStart##1\FancyVerbBreakStop}}%
+    }{}%
+  }
+  \AtBeginEnvironment{Highlighting}{\forcsvlist{\BookWrapToken}{Alert,Annotation,Attribute,BaseN,BuiltIn,Char,Comment,CommentVar,Constant,ControlFlow,DataType,DecVal,Documentation,Error,Extension,Float,Function,Import,Information,Keyword,Normal,Operator,Other,Preprocessor,RegionMarker,SpecialChar,SpecialString,String,Variable,VerbatimString,Warning}}
+\fi
+\pdfstringdefDisableCommands{\def\allowbreak{}}
+
+\makeatletter
+\renewcommand{\@pnumwidth}{3em}
+\renewcommand{\@tocrmarg}{4em}
+\renewcommand{\l@subsection}{\@dottedtocline{2}{1.5em}{3.6em}}
+\renewcommand{\l@subsubsection}{\@dottedtocline{3}{4.5em}{5.3em}}
+\newcommand{\BookDeepHeading}[3]{%
+  \phantomsection
+  \ifnum#2=1
+    \edef\BookBookmark{\noexpand\bookmark[level=#1,dest={\@currentHref}]}%
+    \BookBookmark{#3}%
+  \fi
+  \@startsection{paragraph}{4}{\z@}{1.5ex}{.6ex}{\normalfont\normalsize\bfseries}*{#3}%
+}
+\newbox\BookHeadingBox
+\newcommand{\BookTableHeadings}[1]{%
+  \par\addvspace{.65\baselineskip}%
+  \setbox\BookHeadingBox=\vbox{\hsize=\linewidth\@nobreakfalse #1\par}%
+}
+\newcommand{\BookHeadings}[1]{%
+  \BookTableHeadings{#1}%
+  \Needspace{\dimexpr\ht\BookHeadingBox+\dp\BookHeadingBox+2\baselineskip\relax}%
+  \unvbox\BookHeadingBox
+  \@afterindentfalse\@afterheading
+}
+% Первая страница длинной таблицы должна содержать и ведущие в неё заголовки.
+\AddToHook{package/longtable/after}{%
+  \AddToHook{env/longtable/begin}{\ifx\LTcaptype\@empty\stepcounter{LT@tables}\fi}%
+  \AddToHook{cmd/LT@start/before}{%
+    \ifvoid\BookHeadingBox\else
+      \setbox\LT@firsthead=\vbox{%
+        \unvbox\BookHeadingBox
+        \vskip.65em\relax
+        \ifvoid\LT@firsthead\copy\LT@head\else\unvbox\LT@firsthead\fi}%
+      \global\setbox\BookHeadingBox=\box\voidb@x
+    \fi
+  }%
+}
+\makeatother

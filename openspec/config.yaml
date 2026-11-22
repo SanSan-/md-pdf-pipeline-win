@@ -1,0 +1,12 @@
+schema: spec-driven
+
+context: |
+  Проект собирает один PDF из файла Markdown или каталога статей.
+  Целевая среда — Windows PowerShell 5.1, Python, Pandoc и LuaLaTeX.
+  Точка входа в проектный контекст — openspec/context/00-start-here.md.
+  Текст проектных документов ведётся на русском языке в UTF-8 без BOM.
+
+rules:
+  specs:
+    - Сохраняй идентификаторы требований PDF и структурные заголовки OpenSpec.
+    - Формулируй правило с SHALL или MUST и наблюдаемый результат в сценарии WHEN/THEN.
